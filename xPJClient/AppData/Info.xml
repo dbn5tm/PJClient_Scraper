@@ -1,0 +1,36 @@
+﻿<Info>
+  <nickname>N5TM/6/2</nickname>
+  <nickname2>N5TM/2m7/300</nickname2>
+  <callsign>N5TM</callsign>
+  <firstname>Dange</firstname>
+  <locator>EL29ds</locator>
+  <state>TX</state>
+  <email>n5tm@katytx.net</email>
+  <useWSJTLog>true</useWSJTLog>
+  <WSJTLog>C:\Program Files (x86)\WSJT9\WSJT.LOG</WSJTLog>
+  <fontSize>9.5</fontSize>
+  <history>3600</history>
+  <column0>71</column0>
+  <column1>53</column1>
+  <column2>51</column2>
+  <column3>45</column3>
+  <column4>32</column4>
+  <column5>60</column5>
+  <logQSOs>true</logQSOs>
+  <metric>false</metric>
+  <station1>
+    <band>6m</band>
+    <power>500</power>
+    <antenna>5el LFA</antenna>
+  </station1>
+  <station2>
+    <band>2m</band>
+    <power>300</power>
+    <antenna>2m7</antenna>
+  </station2>
+  <station3>
+    <band>222</band>
+    <power>0</power>
+    <antenna>0</antenna>
+  </station3>
+</Info>
