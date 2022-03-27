@@ -18,9 +18,9 @@ Class WebUpdate
         '
         '
         'Edit URI to your version.html-file. 
-        URI = "http://chat.n5tm.com/downloads/PJClient_version.html"
+        URI = "https://n5tm.com/downloads/PJClient_version.html"
         'Edit URI to your programs zip-file
-        Downuri = "http://chat.n5tm.com/downloads/PJClient_V" + ".zip"
+        Downuri = "http://n5tm.com/downloads/PJClient_V" + ".zip"
         Using client As New WebClient
             ' Set one of the headers.
             client.Headers("User-Agent") = "myUserAgentString"
