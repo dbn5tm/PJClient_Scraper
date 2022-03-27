@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31624.102
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32014.148
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "PJClient", "PJClient\PJClient.vbproj", "{E14C3CF2-D8E5-40C5-B838-73F5F9E8F06A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DistBearing", "DistBearing\DistBearing.csproj", "{5137CC12-34F5-4D74-B961-9AAC296C0005}"
+EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "PJClientInstaller2", "PJClientInstaller2\PJClientInstaller2.vdproj", "{1490976E-790F-477C-8BCA-3A327BF999D0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -37,6 +39,12 @@ Global
 		{5137CC12-34F5-4D74-B961-9AAC296C0005}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{5137CC12-34F5-4D74-B961-9AAC296C0005}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{5137CC12-34F5-4D74-B961-9AAC296C0005}.Release|Win32.ActiveCfg = Release|Any CPU
+		{1490976E-790F-477C-8BCA-3A327BF999D0}.Debug|Any CPU.ActiveCfg = Debug
+		{1490976E-790F-477C-8BCA-3A327BF999D0}.Debug|Mixed Platforms.ActiveCfg = Debug
+		{1490976E-790F-477C-8BCA-3A327BF999D0}.Debug|Win32.ActiveCfg = Debug
+		{1490976E-790F-477C-8BCA-3A327BF999D0}.Release|Any CPU.ActiveCfg = Release
+		{1490976E-790F-477C-8BCA-3A327BF999D0}.Release|Mixed Platforms.ActiveCfg = Release
+		{1490976E-790F-477C-8BCA-3A327BF999D0}.Release|Win32.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

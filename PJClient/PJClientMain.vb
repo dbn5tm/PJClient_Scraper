@@ -1286,245 +1286,245 @@ Public Class PJClientMain
 
                 For i = 0 To dte.Count - 1
                     If wholeline(i + 1).Length > 2 Then
-
+                        If (wholeline(i + 1).Substring(0, 2).Contains("(")) Then wholeline(i + 1) = wholeline(i + 1).Substring(2, wholeline(i + 1).Length - 2)
                         myNick = n.Match(wholeline(i + 1))
-                        If myNick.Success Then
-                            Dim nn = (wholeline(i + 1).Substring(wholeline(i + 1).IndexOf(">") + 1)).Split("</a>")
-                            Dim nnn = ip.Split(nn(1))
-                            Dim ipaddr = ip.Match(wholeline(i + 1))
-                            post_nick(i) = nn(0) + nnn(0).Substring(3)
+                            If myNick.Success Then
+                                Dim nn = (wholeline(i + 1).Substring(wholeline(i + 1).IndexOf(">") + 1)).Split("</a>")
+                                Dim nnn = ip.Split(nn(1))
+                                Dim ipaddr = ip.Match(wholeline(i + 1))
+                                post_nick(i) = nn(0) + nnn(0).Substring(3)
 
-                        Else
-                            If PageURLIndex > 0 Then
-                                myNick = n2.Match(wholeline(i + 1))
                             Else
-                                myNick = n1.Match(wholeline(i + 1))
+                                If PageURLIndex > 0 Then
+                                    myNick = n2.Match(wholeline(i + 1))
+                                Else
+                                    myNick = n1.Match(wholeline(i + 1))
+                                End If
+
+
+                                If myNick.Length > 1 Then
+                                    If myNick.Value.Contains(SplitChar) Then
+                                        Dim nn = wholeline(i + 1).Substring(wholeline(i + 1).IndexOf(SplitChar) - 1)
+                                        Dim nnn = ip.Split(nn)
+                                        post_nick(i) = nnn(0).Substring(2)
+
+                                    End If
+                                End If
+
+                            End If
+                            ' this was added to clean up a dangling } or ) after a page change by Chris Sept 2021
+                            If PageURLIndex > 0 Then
+                                Dim tpost_nick = post_nick(i).Split("}")
+                                post_nick(i) = tpost_nick(0)
+                            Else
+                                Dim tpost_nick = post_nick(i).Split(")")
+                                post_nick(i) = tpost_nick(0)
                             End If
 
+                            Dim split_nick = post_nick(i).Split(" ")
 
-                            If myNick.Length > 1 Then
-                                If myNick.Value.Contains(SplitChar) Then
-                                    Dim nn = wholeline(i + 1).Substring(wholeline(i + 1).IndexOf(SplitChar) - 1)
-                                    Dim nnn = ip.Split(nn)
-                                    post_nick(i) = nnn(0).Substring(2)
+                            Dim npj = New PJ
+                            post_time(i) = dte.Item(i).Value
+
+                            Dim item_found = False
+                            Dim item_index = 0
+                            ' check all items in nick_unique for this nickname
+                            For Each Item As PJ In nick_unique
+                                If Item.nickname = post_nick(i) Then
+                                    item_found = True
+                                    npj = Item
+                                    Dim post_old = nick_unique.Item(item_index).post
+                                    Dim post_new = PostTimeToDate(post_time(i))
+                                    Try
+                                        Dim ddiff = DateDiff("s", PostTimeToDate(post_time(i)), nick_unique.Item(item_index).post)
+                                        If ddiff <= 0 Then
+                                            nick_unique.Item(item_index).post = PostTimeToDate(post_time(i))
+                                        End If
+                                    Catch ex As Exception
+                                        Console.Write(ex)
+                                    End Try
+
+
 
                                 End If
-                            End If
+                                item_index += 1
+                            Next
 
-                        End If
-                        ' this was added to clean up a dangling } or ) after a page change by Chris Sept 2021
-                        If PageURLIndex > 0 Then
-                            Dim tpost_nick = post_nick(i).Split("}")
-                            post_nick(i) = tpost_nick(0)
-                        Else
-                            Dim tpost_nick = post_nick(i).Split(")")
-                            post_nick(i) = tpost_nick(0)
-                        End If
 
-                        Dim split_nick = post_nick(i).Split(" ")
+                            ' if not found in nick_unique, add it to collection
+                            If Not item_found Then
+                                npj.callsign = split_nick(0).Split("/")(0)
+                                npj.firstname = split_nick(1)
+                                npj.state = split_nick(2)
+                                npj.locator = split_nick(3)
+                                npj.distance = MHDistance(myInfo.locator, npj.locator)
+                                npj.azmuth = MHAzmuth(myInfo.locator, npj.locator)
+                                npj.nickname = post_nick(i)
+                                npj.post = PostTimeToDate(post_time(i))
 
-                        Dim npj = New PJ
-                        post_time(i) = dte.Item(i).Value
+                                'npj.nick_color = RandomQBColor()
+                                npj.nick_color = call_colors.Item(nick_unique.Count Mod 12)
+                                npj.WebPageIndex = PageURLIndex  ' which web page we are on PJ or EME-1,EME-2 Terrestrial 
 
-                        Dim item_found = False
-                        Dim item_index = 0
-                        ' check all items in nick_unique for this nickname
-                        For Each Item As PJ In nick_unique
-                            If Item.nickname = post_nick(i) Then
-                                item_found = True
-                                npj = Item
-                                Dim post_old = nick_unique.Item(item_index).post
-                                Dim post_new = PostTimeToDate(post_time(i))
+                                ' extract email address
                                 Try
-                                    Dim ddiff = DateDiff("s", PostTimeToDate(post_time(i)), nick_unique.Item(item_index).post)
-                                    If ddiff <= 0 Then
-                                        nick_unique.Item(item_index).post = PostTimeToDate(post_time(i))
+                                    Dim em = e.Match(wholeline(i + 1)).ToString.Replace("','", "@")
+                                    If em.Length > 0 Then
+                                        npj.email = Mid(em, 9, em.Length - 10)
                                     End If
                                 Catch ex As Exception
+                                    Exit For
+                                End Try
+                                Try
 
+
+                                    ' is this call in WSJT Log?
+                                    For Each item In logArray
+                                        If item.length > 1 Then
+                                            If item(2).ToString.Contains(Mid(split_nick(0), 1, item(2).ToString.Length)) Then
+                                                npj.logged(-1) = item
+                                                'npj.distance = MHDistance(myInfo.locator, npj.locator)
+                                                'npj.asmuth = MHAzmuth(myInfo.locator, npj.locator)
+                                                'addQSOToDatabase(npj, item)
+                                            End If
+                                        End If
+
+
+                                    Next
+                                    '-------- check the Log4OM SQLite database for worked stations.
+                                    If useSQLiteDB Then
+                                        Dim Log4OM = chkSQLiteDB(WSJTLogPath, split_nick(0).Split("/")(0))
+                                        For Each item In Log4OM
+                                            npj.logged(-1) = item
+                                        Next
+                                    End If
+
+                                Catch ex As Exception
+                                    If Not DontShowDBException Then
+                                        MsgBox("Database or ADIF File problems (check settings)")
+                                        DontShowDBException = True
+                                    End If
                                 End Try
 
-
-
-                            End If
-                            item_index += 1
-                        Next
-
-
-                        ' if not found in nick_unique, add it to collection
-                        If Not item_found Then
-                            npj.callsign = split_nick(0).Split("/")(0)
-                            npj.firstname = split_nick(1)
-                            npj.state = split_nick(2)
-                            npj.locator = split_nick(3)
-                            npj.distance = MHDistance(myInfo.locator, npj.locator)
-                            npj.azmuth = MHAzmuth(myInfo.locator, npj.locator)
-                            npj.nickname = post_nick(i)
-                            npj.post = PostTimeToDate(post_time(i))
-
-                            'npj.nick_color = RandomQBColor()
-                            npj.nick_color = call_colors.Item(nick_unique.Count Mod 12)
-                            npj.WebPageIndex = PageURLIndex  ' which web page we are on PJ or EME-1,EME-2 Terrestrial 
-
-                            ' extract email address
-                            Try
-                                Dim em = e.Match(wholeline(i + 1)).ToString.Replace("','", "@")
-                                If em.Length > 0 Then
-                                    npj.email = Mid(em, 9, em.Length - 10)
-                                End If
-                            Catch ex As Exception
-                                Console.Write(ex.ToString())
-                            End Try
-                            Try
-
-
-                                ' is this call in WSJT Log?
-                                For Each item In logArray
-                                    If item.length > 1 Then
-                                        If item(2).ToString.Contains(Mid(split_nick(0), 1, item(2).ToString.Length)) Then
-                                            npj.logged(-1) = item
-                                            'npj.distance = MHDistance(myInfo.locator, npj.locator)
-                                            'npj.asmuth = MHAzmuth(myInfo.locator, npj.locator)
-                                            'addQSOToDatabase(npj, item)
-                                        End If
+                                If PageURLIndex > 0 Then
+                                    ' is this call in Call3.txt?
+                                    If call3Array.Contains(npj.callsign.Split("/")(0)) Then
+                                        npj.call3 = True
+                                    Else
+                                        SetStatusLabelText("Some stations on page not in Call3.txt, Use menu to add.", Me.ToolStripStatusLabel2)
                                     End If
-
-
-                                Next
-                                '-------- check the Log4OM SQLite database for worked stations.
-                                If useSQLiteDB Then
-                                    Dim Log4OM = chkSQLiteDB(WSJTLogPath, split_nick(0).Split("/")(0))
-                                    For Each item In Log4OM
-                                        npj.logged(-1) = item
-                                    Next
                                 End If
 
-                            Catch ex As Exception
-                                If Not DontShowDBException Then
-                                    MsgBox("Database or ADIF File problems (check settings)")
-                                    DontShowDBException = True
-                                End If
-                            End Try
+                                'npj.xstation = xStation
+                                xStationXML.SaveStationElement(npj)
+                                nick_unique.Add(npj)
 
-                            If PageURLIndex > 0 Then
-                                ' is this call in Call3.txt?
-                                If call3Array.Contains(npj.callsign.Split("/")(0)) Then
-                                    npj.call3 = True
-                                Else
-                                    SetStatusLabelText("Some stations on page not in Call3.txt, Use menu to add.", Me.ToolStripStatusLabel2)
-                                End If
+
+
+
                             End If
 
-                            'npj.xstation = xStation
-                            xStationXML.SaveStationElement(npj)
-                            nick_unique.Add(npj)
 
 
+                            'post_time(i) = dt.Split(wholeline(i))
+                            'post_time(i) = dte.Item(i).Value
+                            'post_email(i) = email.Item(i).Value
+                            'post_nick(i) = nick.Item(i).Value.Substring(1, nick.Item(i).Value.IndexOf("<") - 1)
 
+                            'find last occurance of (
+                            'Dim s = wholeline(i + 1).Split("\(.<a")
+                            'Dim p = 0
 
-                        End If
+                            If InStr(wholeline(i + 1), "<a href") Then
+                                ' email embended post
+                                Dim temp = t.Split(wholeline(i + 1))
+                                If PageURLIndex > 0 Then
+                                    post_text(i) = tJT65A.Split(wholeline(i + 1))(0)
+                                Else
+                                    post_text(i) = t.Split(wholeline(i + 1))(0)
+                                End If
 
-
-
-                        'post_time(i) = dt.Split(wholeline(i))
-                        'post_time(i) = dte.Item(i).Value
-                        'post_email(i) = email.Item(i).Value
-                        'post_nick(i) = nick.Item(i).Value.Substring(1, nick.Item(i).Value.IndexOf("<") - 1)
-
-                        'find last occurance of (
-                        'Dim s = wholeline(i + 1).Split("\(.<a")
-                        'Dim p = 0
-
-                        If InStr(wholeline(i + 1), "<a href") Then
-                            ' email embended post
-                            Dim temp = t.Split(wholeline(i + 1))
-                            If PageURLIndex > 0 Then
-                                post_text(i) = tJT65A.Split(wholeline(i + 1))(0)
                             Else
-                                post_text(i) = t.Split(wholeline(i + 1))(0)
-                            End If
+                                ' non email embedded post
+                                Dim p = wholeline(i + 1).IndexOf(SplitChar & post_nick(i))
+                                If p > 1 Then
+                                    post_text(i) = wholeline(i + 1).Substring(1, p - 1)
 
-                        Else
-                            ' non email embedded post
-                            Dim p = wholeline(i + 1).IndexOf(SplitChar & post_nick(i))
-                            If p > 1 Then
-                                post_text(i) = wholeline(i + 1).Substring(1, p - 1)
-
-                            End If
-
-                        End If
-
-                        '----save all posts for each station
-                        If npj.posts.Count > 0 Then
-
-                            If Not npj.posts.Contains(post_time(i).Split(" ")(1) + ": " + post_text(i)) Then
-                                Dim pdiff = DateDiff("s", PostTimeToDate(post_time(i)), npj.post)
-                                If pdiff > 0 Then
-                                    npj.posts.Add(post_time(i).Split(" ")(1) + ": " + post_text(i))
-                                Else
-                                    npj.posts.Insert(0, (post_time(i).Split(" ")(1) + ": " + post_text(i)))
                                 End If
-                                'if this station is in tab update
-                                If Me.InfoTabControl.TabPages(2).Text = npj.callsign.Split("/")(0) Then
 
-                                    Me.SelectedStationsTextBox.Text = ""
+                            End If
 
-                                    For Each Item As String In npj.posts
-                                        Me.SelectedStationsTextBox.Text += (Item + Chr(13) + Chr(10))
-                                    Next
-                                End If
-                            End If
-                        Else
-                            npj.posts.Add(post_time(i).Split(" ")(1) + ": " + post_text(i))
-                        End If
-                        '--------------
-                        If post_text(i) = Nothing Then post_text(i) = wholeline(i)
-                        Dim infoPost = post_text(i).Split("~")
+                            '----save all posts for each station
+                            If npj.posts.Count > 0 Then
 
-                        If infoPost.Count > 2 Then
-
-                            Dim encrPost = post_text(i).Replace("~Plus~", "+")
-                            encrPost = encrPost.Replace("~Percent~", "%")
-                            encrPost = encrPost.Replace("~http~", "http://")
-                            encrPost = encrPost.Replace("~GT~", ">")
-                            encrPost = encrPost.Replace("~LT~", "<")
-                            encrPost = encrPost.Replace("~w.w.w~", "www")
-                            post_text(i) = encrPost
-                            Dim cmd = infoPost(1)
-                            If cmd.IndexOf("CQ") <> -1 Then
-                                If infoPost.Count > 3 Then
-                                    cmd = cmd + infoPost(3)
-                                End If
-                            End If
-                            If cmd.IndexOf("Running") <> -1 Then
-                                If infoPost.Count > 3 Then
-                                    cmd = cmd + infoPost(3)
-                                End If
-                            End If
-                            If cmd.IndexOf("QRV") <> -1 Then
-                                If infoPost.Count > 3 Then
-                                    cmd = cmd + infoPost(3)
-                                End If
-                            End If
-                            If cmd.Contains("CQ") Or cmd.Contains("Running") Or cmd.Contains("QRV") Or cmd.Contains("Clear") Then
-                                Dim freq = infoPost(2)
-                                If freq_post.Contains(split_nick(0)) Then
-                                    ' this is older post of frequency
-                                    AddTreeNode(freq, split_nick(0).Split("/")(0), 1, cmd, post_time(i).Split(" ")(1))
-                                Else
-                                    ' this is most recent post of frequency
-                                    If IsNumeric(freq) Then
-                                        freq_post.Add(split_nick(0))
-                                        AddTreeNode(freq, split_nick(0).Split("/")(0), 0, cmd, post_time(i).Split(" ")(1))
+                                If Not npj.posts.Contains(post_time(i).Split(" ")(1) + ": " + post_text(i)) Then
+                                    Dim pdiff = DateDiff("s", PostTimeToDate(post_time(i)), npj.post)
+                                    If pdiff > 0 Then
+                                        npj.posts.Add(post_time(i).Split(" ")(1) + ": " + post_text(i))
+                                    Else
+                                        npj.posts.Insert(0, (post_time(i).Split(" ")(1) + ": " + post_text(i)))
                                     End If
+                                    'if this station is in tab update
+                                    If Me.InfoTabControl.TabPages(2).Text = npj.callsign.Split("/")(0) Then
 
+                                        Me.SelectedStationsTextBox.Text = ""
+
+                                        For Each Item As String In npj.posts
+                                            Me.SelectedStationsTextBox.Text += (Item + Chr(13) + Chr(10))
+                                        Next
+                                    End If
                                 End If
+                            Else
+                                npj.posts.Add(post_time(i).Split(" ")(1) + ": " + post_text(i))
                             End If
+                            '--------------
+                            If post_text(i) = Nothing Then post_text(i) = wholeline(i)
+                            Dim infoPost = post_text(i).Split("~")
+
+                            If infoPost.Count > 2 Then
+
+                                Dim encrPost = post_text(i).Replace("~Plus~", "+")
+                                encrPost = encrPost.Replace("~Percent~", "%")
+                                encrPost = encrPost.Replace("~http~", "http://")
+                                encrPost = encrPost.Replace("~GT~", ">")
+                                encrPost = encrPost.Replace("~LT~", "<")
+                                encrPost = encrPost.Replace("~w.w.w~", "www")
+                                post_text(i) = encrPost
+                                Dim cmd = infoPost(1)
+                                If cmd.IndexOf("CQ") <> -1 Then
+                                    If infoPost.Count > 3 Then
+                                        cmd = cmd + infoPost(3)
+                                    End If
+                                End If
+                                If cmd.IndexOf("Running") <> -1 Then
+                                    If infoPost.Count > 3 Then
+                                        cmd = cmd + infoPost(3)
+                                    End If
+                                End If
+                                If cmd.IndexOf("QRV") <> -1 Then
+                                    If infoPost.Count > 3 Then
+                                        cmd = cmd + infoPost(3)
+                                    End If
+                                End If
+                                If cmd.Contains("CQ") Or cmd.Contains("Running") Or cmd.Contains("QRV") Or cmd.Contains("Clear") Then
+                                    Dim freq = infoPost(2)
+                                    If freq_post.Contains(split_nick(0)) Then
+                                        ' this is older post of frequency
+                                        AddTreeNode(freq, split_nick(0).Split("/")(0), 1, cmd, post_time(i).Split(" ")(1))
+                                    Else
+                                        ' this is most recent post of frequency
+                                        If IsNumeric(freq) Then
+                                            freq_post.Add(split_nick(0))
+                                            AddTreeNode(freq, split_nick(0).Split("/")(0), 0, cmd, post_time(i).Split(" ")(1))
+                                        End If
+
+                                    End If
+                                End If
 
 
 
+                            End If
                         End If
-                    End If
 
                 Next i
 
