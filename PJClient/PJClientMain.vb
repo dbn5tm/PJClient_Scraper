@@ -1304,20 +1304,24 @@ Public Class PJClientMain
                                 Else
                                 'wholeline(i + 1) = "xxxxx(no email)  " + wholeline(i + 1)
                                 myNick = n1.Match(splitline)
-                                If (wholeline(i + 1).Contains(vbTab)) Then
-                                    myNick = n1.Match(wholeline(i + 1).Split(vbTab)(1))
-                                End If
+                                'If (wholeline(i + 1).Contains(vbTab)) Then
+                                '    myNick = n1.Match(wholeline(i + 1).Split(vbTab)(1))
+                                'End If
 
                             End If
 
 
                             If myNick.Length > 1 Then
                                 If myNick.Value.Contains(SplitChar) Then
-                                    'Dim nn = wholeline(i + 1).Substring(wholeline(i + 1).IndexOf(SplitChar) - 1)
-                                    Dim nn = splitline '.Substring(splitline.IndexOf(SplitChar) - 1)
-                                    Dim nnn = ip.Split(nn)
-                                    post_nick(i) = splitline.Substring(1)
+                                    If (splitline = "") Then
+                                        Dim nn = wholeline(i + 1).Substring(wholeline(i + 1).IndexOf(SplitChar) - 1)
+                                        post_nick(i) = nn.Substring(2)
+                                    Else
+                                        Dim nn = splitline
+                                        Dim nnn = ip.Split(nn)
+                                        post_nick(i) = splitline.Substring(1)
 
+                                    End If
                                 End If
                             End If
 
