@@ -18,6 +18,7 @@ Class WebUpdate
         '
         '
         'Edit URI to your version.html-file. 
+        URI = "http://n5tm.com/downloads/PJClient_version.html"
         URI = "https://n5tm.com/downloads/PJClient_version.html"
         'Edit URI to your programs zip-file
         Downuri = "http://n5tm.com/downloads/PJClient_V" + ".zip"
