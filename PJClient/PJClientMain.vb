@@ -1249,6 +1249,7 @@ Public Class PJClientMain
             Dim de As New Regex("This service")
             Dim textpart = de.Split(posted(1))
             Dim wholeline = dt.Split(textpart(0))
+            Dim splitline = ""
             Dim dte = dt.Matches(textpart(0))
             ' find nick names
             Dim n As New Regex(">.*</a>")
@@ -1286,6 +1287,9 @@ Public Class PJClientMain
 
                 For i = 0 To dte.Count - 1
                     If wholeline(i + 1).Length > 2 Then
+                        If (wholeline(i + 1).Contains(vbTab)) Then
+                            splitline = wholeline(i + 1).Split(vbTab)(1)
+                        End If
                         If (wholeline(i + 1).Substring(0, 2).Contains("(")) Then wholeline(i + 1) = wholeline(i + 1).Substring(2, wholeline(i + 1).Length - 2)
                         myNick = n.Match(wholeline(i + 1))
                             If myNick.Success Then
@@ -1298,20 +1302,26 @@ Public Class PJClientMain
                                 If PageURLIndex > 0 Then
                                     myNick = n2.Match(wholeline(i + 1))
                                 Else
-                                    myNick = n1.Match(wholeline(i + 1))
-                                End If
-
-
-                                If myNick.Length > 1 Then
-                                    If myNick.Value.Contains(SplitChar) Then
-                                        Dim nn = wholeline(i + 1).Substring(wholeline(i + 1).IndexOf(SplitChar) - 1)
-                                        Dim nnn = ip.Split(nn)
-                                        post_nick(i) = nnn(0).Substring(2)
-
-                                    End If
+                                'wholeline(i + 1) = "xxxxx(no email)  " + wholeline(i + 1)
+                                myNick = n1.Match(splitline)
+                                If (wholeline(i + 1).Contains(vbTab)) Then
+                                    myNick = n1.Match(wholeline(i + 1).Split(vbTab)(1))
                                 End If
 
                             End If
+
+
+                            If myNick.Length > 1 Then
+                                If myNick.Value.Contains(SplitChar) Then
+                                    'Dim nn = wholeline(i + 1).Substring(wholeline(i + 1).IndexOf(SplitChar) - 1)
+                                    Dim nn = splitline '.Substring(splitline.IndexOf(SplitChar) - 1)
+                                    Dim nnn = ip.Split(nn)
+                                    post_nick(i) = splitline.Substring(1)
+
+                                End If
+                            End If
+
+                        End If
                             ' this was added to clean up a dangling } or ) after a page change by Chris Sept 2021
                             If PageURLIndex > 0 Then
                                 Dim tpost_nick = post_nick(i).Split("}")
@@ -1351,8 +1361,10 @@ Public Class PJClientMain
                             Next
 
 
-                            ' if not found in nick_unique, add it to collection
-                            If Not item_found Then
+                        ' if not found in nick_unique, add it to collection
+                        If Not item_found Then
+                            If (split_nick.Count) > 3 Then   ' check for bogus nick due to extra parentheses
+
                                 npj.callsign = split_nick(0).Split("/")(0)
                                 npj.firstname = split_nick(1)
                                 npj.state = split_nick(2)
@@ -1365,77 +1377,77 @@ Public Class PJClientMain
                                 'npj.nick_color = RandomQBColor()
                                 npj.nick_color = call_colors.Item(nick_unique.Count Mod 12)
                                 npj.WebPageIndex = PageURLIndex  ' which web page we are on PJ or EME-1,EME-2 Terrestrial 
-
-                                ' extract email address
-                                Try
-                                    Dim em = e.Match(wholeline(i + 1)).ToString.Replace("','", "@")
-                                    If em.Length > 0 Then
-                                        npj.email = Mid(em, 9, em.Length - 10)
-                                    End If
-                                Catch ex As Exception
-                                    Exit For
-                                End Try
-                                Try
-
-
-                                    ' is this call in WSJT Log?
-                                    For Each item In logArray
-                                        If item.length > 1 Then
-                                            If item(2).ToString.Contains(Mid(split_nick(0), 1, item(2).ToString.Length)) Then
-                                                npj.logged(-1) = item
-                                                'npj.distance = MHDistance(myInfo.locator, npj.locator)
-                                                'npj.asmuth = MHAzmuth(myInfo.locator, npj.locator)
-                                                'addQSOToDatabase(npj, item)
-                                            End If
-                                        End If
+                            End If
+                            ' extract email address
+                            Try
+                                Dim em = e.Match(wholeline(i + 1)).ToString.Replace("','", "@")
+                                If em.Length > 0 Then
+                                    npj.email = Mid(em, 9, em.Length - 10)
+                                End If
+                            Catch ex As Exception
+                                Exit For
+                            End Try
+                            Try
 
 
-                                    Next
-                                    '-------- check the Log4OM SQLite database for worked stations.
-                                    If useSQLiteDB Then
-                                        Dim Log4OM = chkSQLiteDB(WSJTLogPath, split_nick(0).Split("/")(0))
-                                        For Each item In Log4OM
+                                ' is this call in WSJT Log?
+                                For Each item In logArray
+                                    If item.length > 1 Then
+                                        If item(2).ToString.Contains(Mid(split_nick(0), 1, item(2).ToString.Length)) Then
                                             npj.logged(-1) = item
-                                        Next
+                                            'npj.distance = MHDistance(myInfo.locator, npj.locator)
+                                            'npj.asmuth = MHAzmuth(myInfo.locator, npj.locator)
+                                            'addQSOToDatabase(npj, item)
+                                        End If
                                     End If
 
-                                Catch ex As Exception
-                                    If Not DontShowDBException Then
-                                        MsgBox("Database or ADIF File problems (check settings)")
-                                        DontShowDBException = True
-                                    End If
-                                End Try
 
-                                If PageURLIndex > 0 Then
-                                    ' is this call in Call3.txt?
-                                    If call3Array.Contains(npj.callsign.Split("/")(0)) Then
-                                        npj.call3 = True
-                                    Else
-                                        SetStatusLabelText("Some stations on page not in Call3.txt, Use menu to add.", Me.ToolStripStatusLabel2)
-                                    End If
+                                Next
+                                '-------- check the Log4OM SQLite database for worked stations.
+                                If useSQLiteDB Then
+                                    Dim Log4OM = chkSQLiteDB(WSJTLogPath, split_nick(0).Split("/")(0))
+                                    For Each item In Log4OM
+                                        npj.logged(-1) = item
+                                    Next
                                 End If
 
-                                'npj.xstation = xStation
-                                xStationXML.SaveStationElement(npj)
-                                nick_unique.Add(npj)
+                            Catch ex As Exception
+                                If Not DontShowDBException Then
+                                    MsgBox("Database or ADIF File problems (check settings)")
+                                    DontShowDBException = True
+                                End If
+                            End Try
 
-
-
-
+                            If PageURLIndex > 0 Then
+                                ' is this call in Call3.txt?
+                                If call3Array.Contains(npj.callsign.Split("/")(0)) Then
+                                    npj.call3 = True
+                                Else
+                                    SetStatusLabelText("Some stations on page not in Call3.txt, Use menu to add.", Me.ToolStripStatusLabel2)
+                                End If
                             End If
 
+                            'npj.xstation = xStation
+                            xStationXML.SaveStationElement(npj)
+                            nick_unique.Add(npj)
 
 
-                            'post_time(i) = dt.Split(wholeline(i))
-                            'post_time(i) = dte.Item(i).Value
-                            'post_email(i) = email.Item(i).Value
-                            'post_nick(i) = nick.Item(i).Value.Substring(1, nick.Item(i).Value.IndexOf("<") - 1)
 
-                            'find last occurance of (
-                            'Dim s = wholeline(i + 1).Split("\(.<a")
-                            'Dim p = 0
 
-                            If InStr(wholeline(i + 1), "<a href") Then
+                        End If
+
+
+
+                        'post_time(i) = dt.Split(wholeline(i))
+                        'post_time(i) = dte.Item(i).Value
+                        'post_email(i) = email.Item(i).Value
+                        'post_nick(i) = nick.Item(i).Value.Substring(1, nick.Item(i).Value.IndexOf("<") - 1)
+
+                        'find last occurance of (
+                        'Dim s = wholeline(i + 1).Split("\(.<a")
+                        'Dim p = 0
+
+                        If InStr(wholeline(i + 1), "<a href") Then
                                 ' email embended post
                                 Dim temp = t.Split(wholeline(i + 1))
                                 If PageURLIndex > 0 Then
