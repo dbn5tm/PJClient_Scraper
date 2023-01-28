@@ -12,7 +12,7 @@ Public Class WebClientTread
     Public ThreadRunning As Boolean = False
 
     Private m_url As String
-    Public Property url() As String
+    Public Property URL() As String
         Get
             Return m_url
         End Get
@@ -22,7 +22,7 @@ Public Class WebClientTread
     End Property
 
     Private m_refreshtime As Integer
-    Public Property refreshtime() As Integer
+    Public Property Refreshtime() As Integer
         Get
             Return m_refreshtime
         End Get
@@ -60,8 +60,12 @@ Public Class WebClientTread
 
         'client.Headers("User-Agent") = "myUserAgentString"
         Try
-                'Dim str As String = client.DownloadString(uri)
-                Dim str As String = client.DownloadString(url)
+            ' below lines added 1-28-2023 to fix the issue "The request was aborted: Could not create SSL/TLS secure channel." reported by Lloyd K8DIO running on W7
+            ServicePointManager.Expect100Continue = True
+            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12
+            ' -------------------------------------------------
+            'Dim str As String = client.DownloadString(uri)
+            Dim str As String = client.DownloadString(url)
                 'Dim str As String = client.DownloadString("http://www.pingjockey.net/cgi-bin/pingtalk/")
 
                 RaiseEvent PageRcvd(str)
